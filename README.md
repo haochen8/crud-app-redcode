@@ -44,6 +44,20 @@ dotnet run --project server/BookQuotes.Api
 
 The HTTP development profile listens on `http://localhost:5047`; the HTTPS profile also listens on `https://localhost:7047`. In Development, the health endpoint is `/health` and the OpenAPI document is `/openapi/v1.json`.
 
+## Frontend development
+
+Install dependencies, start the development server, run tests, and create a production build:
+
+```bash
+cd client
+npm ci
+npm start
+npm test -- --watch=false
+npm run build
+```
+
+The Angular development server listens on `http://localhost:4200`. Development builds use `http://localhost:5047/api`; production builds use `https://localhost:7047/api`. These values are defined in `client/src/environments/` rather than in services.
+
 ## Project language
 
 Source code, UI text, documentation, commits, and GitHub issues use English.
