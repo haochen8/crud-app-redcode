@@ -31,6 +31,19 @@ Book & Quotes is a responsive CRUD web application for managing books and person
 
 Detailed setup, database, secret-management, build, and test instructions will be added as the corresponding project features are implemented.
 
+## Backend development
+
+Restore, build, test, and run the API from the repository root:
+
+```bash
+dotnet restore server/BookQuotes.sln
+dotnet build server/BookQuotes.sln --no-restore
+dotnet test server/BookQuotes.sln --no-build
+dotnet run --project server/BookQuotes.Api
+```
+
+The HTTP development profile listens on `http://localhost:5047`; the HTTPS profile also listens on `https://localhost:7047`. In Development, the health endpoint is `/health` and the OpenAPI document is `/openapi/v1.json`.
+
 ## Project language
 
 Source code, UI text, documentation, commits, and GitHub issues use English.
@@ -38,4 +51,3 @@ Source code, UI text, documentation, commits, and GitHub issues use English.
 ## Backlog
 
 See the [GitHub-ready issue backlog](docs/issues/README.md) for the implementation plan, dependencies, and acceptance criteria.
-
