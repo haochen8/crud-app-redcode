@@ -1,0 +1,9 @@
+.book-copy {
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .table-responsive {
+    overflow-x: auto;
+  }
+}

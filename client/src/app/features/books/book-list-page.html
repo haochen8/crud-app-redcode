@@ -1,0 +1,106 @@
+<section aria-labelledby="books-title" aria-live="polite">
+  <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 id="books-title" class="h2 mb-1">Books</h1>
+      <p class="text-body-secondary mb-0">Browse and manage your book collection.</p>
+    </div>
+    <a class="btn btn-primary align-self-start text-nowrap" routerLink="/books/new">
+      <i class="fa-solid fa-plus me-1" aria-hidden="true"></i>
+      Add New Book
+    </a>
+  </div>
+
+  @if (errorMessage(); as message) {
+    <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
+      <span>{{ message }}</span>
+      <button class="btn btn-sm btn-outline-danger" type="button" (click)="loadBooks()">
+        <i class="fa-solid fa-rotate-right me-1" aria-hidden="true"></i>
+        Retry
+      </button>
+    </div>
+  }
+
+  @if (isLoading()) {
+    <div class="text-center py-5" role="status">
+      <div class="spinner-border text-primary" aria-hidden="true"></div>
+      <p class="mt-3 mb-0">Loading books…</p>
+    </div>
+  } @else if (books().length === 0) {
+    <div class="border rounded-3 bg-body-tertiary text-center p-4 p-md-5">
+      <i class="fa-solid fa-book-open fa-3x text-primary mb-3" aria-hidden="true"></i>
+      <h2 class="h4">No books yet</h2>
+      <p class="text-body-secondary">Add your first book to start the collection.</p>
+      <a class="btn btn-primary" routerLink="/books/new">Add New Book</a>
+    </div>
+  } @else {
+    <div class="table-responsive d-none d-md-block border rounded-3">
+      <table class="table table-hover align-middle mb-0">
+        <caption class="visually-hidden">Books in your collection</caption>
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Author</th>
+            <th scope="col">Published</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (book of books(); track book.id) {
+            <tr>
+              <th scope="row" class="book-copy">{{ book.title }}</th>
+              <td class="book-copy">{{ book.author }}</td>
+              <td>{{ book.publishedDate + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}</td>
+              <td>
+                <div class="d-flex justify-content-end gap-2">
+                  <a class="btn btn-sm btn-outline-primary" [routerLink]="['/books', book.id, 'edit']">
+                    <i class="fa-solid fa-pen" aria-hidden="true"></i>
+                    <span class="visually-hidden">Edit {{ book.title }}</span>
+                  </a>
+                  <button
+                    class="btn btn-sm btn-outline-danger"
+                    type="button"
+                    [disabled]="deletingId() === book.id"
+                    (click)="deleteBook(book)"
+                  >
+                    <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                    <span class="visually-hidden">Delete {{ book.title }}</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-grid gap-3 d-md-none">
+      @for (book of books(); track book.id) {
+        <article class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h5 book-copy">{{ book.title }}</h2>
+            <p class="book-copy mb-1"><span class="fw-semibold">Author:</span> {{ book.author }}</p>
+            <p class="text-body-secondary mb-3">
+              <span class="fw-semibold">Published:</span>
+              {{ book.publishedDate + 'T00:00:00Z' | date: 'mediumDate' : 'UTC' }}
+            </p>
+            <div class="d-flex gap-2">
+              <a class="btn btn-outline-primary flex-grow-1" [routerLink]="['/books', book.id, 'edit']">
+                <i class="fa-solid fa-pen me-1" aria-hidden="true"></i>
+                Edit
+              </a>
+              <button
+                class="btn btn-outline-danger flex-grow-1"
+                type="button"
+                [disabled]="deletingId() === book.id"
+                (click)="deleteBook(book)"
+              >
+                <i class="fa-solid fa-trash me-1" aria-hidden="true"></i>
+                {{ deletingId() === book.id ? 'Deleting…' : 'Delete' }}
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
