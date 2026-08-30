@@ -25,3 +25,14 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{BookQuotes.Api_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "userName": "demo-user",
+  "password": "BookQuotes1",
+  "confirmPassword": "BookQuotes1"
+}
+
+###
