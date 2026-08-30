@@ -1,6 +1,7 @@
 using BookQuotes.Api.Auth;
 using BookQuotes.Api.Contracts.Auth;
 using BookQuotes.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
@@ -8,6 +9,7 @@ namespace BookQuotes.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[AllowAnonymous]
 public sealed class AuthController(
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwtTokenService) : ControllerBase

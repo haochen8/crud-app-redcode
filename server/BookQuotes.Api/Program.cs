@@ -2,7 +2,12 @@ using BookQuotes.Api.Auth;
 using BookQuotes.Api.Data;
 using BookQuotes.Api.Models;
 using BookQuotes.Api.OpenApi;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.Options;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,9 +23,52 @@ builder.Services.AddProblemDetails(options =>
     options.CustomizeProblemDetails = context =>
         context.ProblemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
 });
-builder.Services.Configure<JwtOptions>(
-    builder.Configuration.GetSection(JwtOptions.SectionName));
+var jwtSection = builder.Configuration.GetRequiredSection(JwtOptions.SectionName);
+builder.Services
+    .AddOptions<JwtOptions>()
+    .Bind(jwtSection)
+    .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "JWT issuer is required.")
+    .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "JWT audience is required.")
+    .Validate(options => options.Key.Length >= 32, "JWT signing key must contain at least 32 characters.")
+    .Validate(options => options.ExpiryMinutes > 0, "JWT expiry must be greater than zero.")
+    .ValidateOnStart();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer();
+builder.Services
+    .AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+    .Configure<IOptions<JwtOptions>>((options, jwtOptionsAccessor) =>
+    {
+        var jwtOptions = jwtOptionsAccessor.Value;
+        options.MapInboundClaims = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Key)),
+            ClockSkew = TimeSpan.Zero,
+        };
+    });
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? [];
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AngularClient", policy =>
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services
@@ -43,15 +91,17 @@ app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.MapOpenApi().AllowAnonymous();
 }
 
 app.UseHttpsRedirection();
 
+app.UseCors("AngularClient");
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHealthChecks("/health");
+app.MapHealthChecks("/health").AllowAnonymous();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

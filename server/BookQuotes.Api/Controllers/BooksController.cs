@@ -1,6 +1,7 @@
 using BookQuotes.Api.Contracts.Books;
 using BookQuotes.Api.Data;
 using BookQuotes.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,6 +9,7 @@ namespace BookQuotes.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public sealed class BooksController(ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpGet]
