@@ -66,4 +66,32 @@ describe('BookListPage', () => {
 
     expect(bookService.delete).not.toHaveBeenCalled();
   });
+
+  it('removes a confirmed deletion from the rendered list', () => {
+    bookService.getAll.and.returnValue(of([book]));
+    bookService.delete.and.returnValue(of(undefined));
+    spyOn(globalThis, 'confirm').and.returnValue(true);
+    const fixture = TestBed.createComponent(BookListPage);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('button.btn-outline-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(bookService.delete).toHaveBeenCalledOnceWith(1);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Kindred');
+  });
+
+  it('preserves a book when confirmed deletion fails', () => {
+    bookService.getAll.and.returnValue(of([book]));
+    bookService.delete.and.returnValue(throwError(() => new Error('failed')));
+    spyOn(globalThis, 'confirm').and.returnValue(true);
+    const fixture = TestBed.createComponent(BookListPage);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('button.btn-outline-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Kindred');
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+  });
 });

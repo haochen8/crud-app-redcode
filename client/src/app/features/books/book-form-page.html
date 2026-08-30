@@ -8,6 +8,12 @@
         <div class="alert alert-danger" role="alert">{{ message }}</div>
       }
 
+      @if (isLoading()) {
+        <div class="text-center py-4" role="status">
+          <div class="spinner-border text-primary" aria-hidden="true"></div>
+          <p class="mt-3 mb-0">Loading book…</p>
+        </div>
+      } @else {
       <form [formGroup]="bookForm" (ngSubmit)="submit()" novalidate>
         <div class="mb-3">
           <label class="form-label" for="book-title">Title</label>
@@ -76,7 +82,11 @@
 
         <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2">
           <a class="btn btn-outline-secondary" routerLink="/books">Cancel</a>
-          <button class="btn btn-primary" type="submit" [disabled]="isSubmitting()">
+          <button
+            class="btn btn-primary"
+            type="submit"
+            [disabled]="isSubmitting() || (isEdit && bookId() === null)"
+          >
             @if (isSubmitting()) {
               <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
               Saving…
@@ -87,6 +97,7 @@
           </button>
         </div>
       </form>
+      }
     </div>
   </div>
 </section>

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
-import { Subject, throwError } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { of, Subject, throwError } from 'rxjs';
 import { Book } from './book.models';
 import { BookFormPage } from './book-form-page';
 import { BookService } from './book.service';
@@ -79,6 +79,50 @@ describe('BookFormPage', () => {
     expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
       'The book could not be saved.',
     );
+  });
+
+  it('loads current values and submits an edit', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { data: { mode: 'edit' }, paramMap: convertToParamMap({ id: '1' }) },
+      },
+    });
+    bookService.getById.and.returnValue(of(savedBook));
+    bookService.update.and.returnValue(of({ ...savedBook, title: 'Kindred Updated' }));
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    const fixture = TestBed.createComponent(BookFormPage);
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement.querySelector('#book-title') as HTMLInputElement).value).toBe(
+      'Kindred',
+    );
+    setInput(fixture.nativeElement, '#book-title', 'Kindred Updated');
+    submit(fixture.nativeElement);
+
+    expect(bookService.update).toHaveBeenCalledOnceWith(1, {
+      title: 'Kindred Updated',
+      author: 'Octavia E. Butler',
+      publishedDate: '1979-06-01',
+    });
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/books');
+  });
+
+  it('handles an invalid edit route without making a request', () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        snapshot: { data: { mode: 'edit' }, paramMap: convertToParamMap({ id: 'invalid' }) },
+      },
+    });
+
+    const fixture = TestBed.createComponent(BookFormPage);
+    fixture.detectChanges();
+
+    expect(bookService.getById).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain(
+      'book ID',
+    );
+    expect((fixture.nativeElement.querySelector('button[type="submit"]') as HTMLButtonElement).disabled).toBeTrue();
   });
 
   function fillValidForm(element: HTMLElement): void {

@@ -9,7 +9,7 @@ import {
 } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
-import { toBookRequest } from './book.models';
+import { toBookFormValue, toBookRequest } from './book.models';
 import { BookService } from './book.service';
 
 function notWhitespace(control: AbstractControl): ValidationErrors | null {
@@ -45,13 +45,21 @@ export class BookFormPage {
   protected readonly isEdit = this.route.snapshot.data['mode'] === 'edit';
   protected readonly headingId = this.isEdit ? 'edit-book-title' : 'add-book-title';
   protected readonly today = getTodayValue();
+  protected readonly isLoading = signal(this.isEdit);
   protected readonly isSubmitting = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly bookId = signal<number | null>(null);
   protected readonly bookForm = this.formBuilder.nonNullable.group({
     title: ['', [Validators.required, notWhitespace, Validators.maxLength(200)]],
     author: ['', [Validators.required, notWhitespace, Validators.maxLength(120)]],
     publishedDate: ['', [Validators.required, notFutureDate]],
   });
+
+  constructor() {
+    if (this.isEdit) {
+      this.loadBook();
+    }
+  }
 
   protected submit(): void {
     if (this.bookForm.invalid || this.isSubmitting()) {
@@ -59,19 +67,46 @@ export class BookFormPage {
       return;
     }
 
-    if (this.isEdit) {
-      this.errorMessage.set('This book cannot be edited until its existing values have loaded.');
+    if (this.isEdit && this.bookId() === null) {
       return;
     }
 
     this.errorMessage.set(null);
     this.isSubmitting.set(true);
-    this.bookService
-      .create(toBookRequest(this.bookForm.getRawValue()))
+    const request = toBookRequest(this.bookForm.getRawValue());
+    const saveRequest = this.isEdit
+      ? this.bookService.update(this.bookId()!, request)
+      : this.bookService.create(request);
+    saveRequest
       .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
         next: () => void this.router.navigateByUrl('/books'),
         error: (error: unknown) => this.errorMessage.set(this.getErrorMessage(error)),
+      });
+  }
+
+  private loadBook(): void {
+    const routeId = Number(this.route.snapshot.paramMap.get('id'));
+    if (!Number.isSafeInteger(routeId) || routeId <= 0) {
+      this.errorMessage.set('The book ID in this URL is invalid.');
+      this.isLoading.set(false);
+      return;
+    }
+
+    this.bookId.set(routeId);
+    this.bookService
+      .getById(routeId)
+      .pipe(finalize(() => this.isLoading.set(false)))
+      .subscribe({
+        next: (book) => this.bookForm.setValue(toBookFormValue(book)),
+        error: (error: unknown) => {
+          this.bookId.set(null);
+          this.errorMessage.set(
+            error instanceof HttpErrorResponse && error.status === 404
+              ? 'The requested book was not found.'
+              : this.getErrorMessage(error),
+          );
+        },
       });
   }
 
