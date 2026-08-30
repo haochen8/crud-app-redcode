@@ -44,6 +44,16 @@ dotnet run --project server/BookQuotes.Api
 
 The HTTP development profile listens on `http://localhost:5047`; the HTTPS profile also listens on `https://localhost:7047`. In Development, the health endpoint is `/health` and the OpenAPI document is `/openapi/v1.json`.
 
+The API uses SQLite. On startup it applies pending EF Core migrations and adds development book data only when the Books table is empty. To create a migration, restore the repository-local tools and run:
+
+```bash
+dotnet tool restore
+dotnet tool run dotnet-ef migrations add <MigrationName> \
+  --project server/BookQuotes.Api \
+  --startup-project server/BookQuotes.Api \
+  --output-dir Data/Migrations
+```
+
 ## Frontend development
 
 Install dependencies, start the development server, run tests, and create a production build:
