@@ -9,3 +9,19 @@ GET {{BookQuotes.Api_HostAddress}}/openapi/v1.json
 Accept: application/json
 
 ###
+
+GET {{BookQuotes.Api_HostAddress}}/api/books
+Accept: application/json
+
+###
+
+POST {{BookQuotes.Api_HostAddress}}/api/books
+Content-Type: application/json
+
+{
+  "title": "Refactoring",
+  "author": "Martin Fowler",
+  "publishedDate": "2018-11-19"
+}
+
+###
