@@ -1,6 +1,18 @@
+using System.ComponentModel.DataAnnotations;
+using BookQuotes.Api.Validation;
+
 namespace BookQuotes.Api.Contracts.Books;
 
-public sealed record CreateBookRequest(
-    string Title,
-    string Author,
-    DateOnly PublishedDate);
+public sealed class CreateBookRequest
+{
+    [NotWhiteSpace]
+    [StringLength(200)]
+    public required string Title { get; init; }
+
+    [NotWhiteSpace]
+    [StringLength(120)]
+    public required string Author { get; init; }
+
+    [NotFutureDate]
+    public DateOnly PublishedDate { get; init; }
+}

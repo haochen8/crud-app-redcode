@@ -45,14 +45,15 @@ public sealed class BooksController(ApplicationDbContext dbContext) : Controller
 
     [HttpPost]
     [ProducesResponseType<BookResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<BookResponse>> Create(
         CreateBookRequest request,
         CancellationToken cancellationToken)
     {
         var book = new Book
         {
-            Title = request.Title,
-            Author = request.Author,
+            Title = request.Title.Trim(),
+            Author = request.Author.Trim(),
             PublishedDate = request.PublishedDate,
             CreatedAt = DateTimeOffset.UtcNow,
         };
@@ -66,6 +67,7 @@ public sealed class BooksController(ApplicationDbContext dbContext) : Controller
 
     [HttpPut("{id:int}")]
     [ProducesResponseType<BookResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<BookResponse>> Update(
         int id,
@@ -81,8 +83,8 @@ public sealed class BooksController(ApplicationDbContext dbContext) : Controller
             return NotFound();
         }
 
-        book.Title = request.Title;
-        book.Author = request.Author;
+        book.Title = request.Title.Trim();
+        book.Author = request.Author.Trim();
         book.PublishedDate = request.PublishedDate;
 
         await dbContext.SaveChangesAsync(cancellationToken);
