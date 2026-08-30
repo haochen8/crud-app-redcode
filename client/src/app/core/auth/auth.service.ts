@@ -1,5 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
@@ -12,18 +13,28 @@ import {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private static readonly storageKey = 'book-quotes.auth-session';
   private readonly http = inject(HttpClient);
+  private readonly platformId = inject(PLATFORM_ID);
   private readonly tokenState = signal<string | null>(null);
   private readonly userState = signal<AuthUser | null>(null);
+  private readonly expiresAtState = signal<string | null>(null);
+  private expiryTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly currentUser = this.userState.asReadonly();
-  readonly isAuthenticated = computed(() => this.tokenState() !== null);
+  readonly accessToken = this.tokenState.asReadonly();
+  readonly isAuthenticated = computed(
+    () => this.tokenState() !== null && this.hasNotExpired(this.expiresAtState()),
+  );
+
+  constructor() {
+    this.restoreSession();
+  }
 
   login(request: LoginRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, request).pipe(
       tap((response) => {
-        this.tokenState.set(response.accessToken);
-        this.userState.set(response.user);
+        this.setSession(response);
       }),
     );
   }
@@ -35,6 +46,65 @@ export class AuthService {
   logout(): void {
     this.tokenState.set(null);
     this.userState.set(null);
+    this.expiresAtState.set(null);
+    clearTimeout(this.expiryTimer);
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem(AuthService.storageKey);
+    }
+  }
+
+  private setSession(response: AuthResponse): void {
+    this.tokenState.set(response.accessToken);
+    this.userState.set(response.user);
+    this.expiresAtState.set(response.expiresAt);
+    this.scheduleExpiration(response.expiresAt);
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(AuthService.storageKey, JSON.stringify(response));
+    }
+  }
+
+  private restoreSession(): void {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    try {
+      const storedValue = localStorage.getItem(AuthService.storageKey);
+      if (!storedValue) {
+        return;
+      }
+
+      const session = JSON.parse(storedValue) as Partial<AuthResponse>;
+      if (
+        typeof session.accessToken !== 'string' ||
+        typeof session.expiresAt !== 'string' ||
+        typeof session.user?.id !== 'string' ||
+        typeof session.user.userName !== 'string' ||
+        !this.hasNotExpired(session.expiresAt)
+      ) {
+        this.logout();
+        return;
+      }
+
+      this.tokenState.set(session.accessToken);
+      this.userState.set(session.user as AuthUser);
+      this.expiresAtState.set(session.expiresAt);
+      this.scheduleExpiration(session.expiresAt);
+    } catch {
+      this.logout();
+    }
+  }
+
+  private hasNotExpired(expiresAt: string | null): boolean {
+    return expiresAt !== null && Date.parse(expiresAt) > Date.now();
+  }
+
+  private scheduleExpiration(expiresAt: string): void {
+    clearTimeout(this.expiryTimer);
+    const delay = Math.max(0, Date.parse(expiresAt) - Date.now());
+    this.expiryTimer = setTimeout(() => this.logout(), delay);
   }
 }
 

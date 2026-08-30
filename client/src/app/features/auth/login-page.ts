@@ -36,9 +36,14 @@ export class LoginPage {
       .login(this.loginForm.getRawValue())
       .pipe(finalize(() => this.isSubmitting.set(false)))
       .subscribe({
-        next: () => void this.router.navigateByUrl('/books'),
+        next: () => void this.router.navigateByUrl(this.getDestination()),
         error: (error: unknown) =>
           this.errorMessage.set(getSafeAuthError(error, 'Login failed. Please try again.')),
       });
+  }
+
+  private getDestination(): string {
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    return returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : '/books';
   }
 }

@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'books' },
@@ -15,12 +16,14 @@ export const routes: Routes = [
   },
   {
     path: 'books',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/books/book-list-page').then((page) => page.BookListPage),
     title: 'Books | Book & Quotes',
   },
   {
     path: 'books/new',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/books/book-form-page').then((page) => page.BookFormPage),
     data: { mode: 'create' },
@@ -28,6 +31,7 @@ export const routes: Routes = [
   },
   {
     path: 'books/:id/edit',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/books/book-form-page').then((page) => page.BookFormPage),
     data: { mode: 'edit' },
@@ -35,6 +39,7 @@ export const routes: Routes = [
   },
   {
     path: 'quotes',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./features/quotes/quote-list-page').then((page) => page.QuoteListPage),
     title: 'My Quotes | Book & Quotes',

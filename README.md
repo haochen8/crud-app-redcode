@@ -80,6 +80,8 @@ npm run build
 
 The Angular development server listens on `http://localhost:4200`. Development builds use `http://localhost:5047/api`; production builds use `https://localhost:7047/api`. These values are defined in `client/src/environments/` rather than in services.
 
+The browser client currently persists its JWT session in `localStorage` so a page refresh keeps the user signed in. This is suitable for the learning scope of this project, but JavaScript can read `localStorage`; an XSS vulnerability could therefore expose the token. A production system should prefer a server-issued `Secure`, `HttpOnly`, and appropriate `SameSite` cookie together with CSRF protection and a strict Content Security Policy.
+
 ## Project language
 
 Source code, UI text, documentation, commits, and GitHub issues use English.
