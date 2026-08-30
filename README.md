@@ -54,6 +54,16 @@ dotnet tool run dotnet-ef migrations add <MigrationName> \
   --output-dir Data/Migrations
 ```
 
+Registration uses a username and an ASP.NET Core Identity password. JWT signing keys must stay outside source control. Configure a local key with at least 32 characters:
+
+```bash
+dotnet user-secrets init --project server/BookQuotes.Api
+dotnet user-secrets set "Jwt:Key" "replace-with-a-long-random-development-key" \
+  --project server/BookQuotes.Api
+```
+
+For deployed environments, provide the same value through a secret environment variable such as `Jwt__Key`.
+
 ## Frontend development
 
 Install dependencies, start the development server, run tests, and create a production build:

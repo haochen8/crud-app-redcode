@@ -1,3 +1,4 @@
+using BookQuotes.Api.Auth;
 using BookQuotes.Api.Contracts.Auth;
 using BookQuotes.Api.Models;
 using Microsoft.AspNetCore.Identity;
@@ -7,8 +8,34 @@ namespace BookQuotes.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public sealed class AuthController(UserManager<ApplicationUser> userManager) : ControllerBase
+public sealed class AuthController(
+    UserManager<ApplicationUser> userManager,
+    IJwtTokenService jwtTokenService) : ControllerBase
 {
+    [HttpPost("login")]
+    [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ProblemDetails>(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<AuthResponse>> Login(LoginRequest request)
+    {
+        var user = await userManager.FindByNameAsync(request.UserName.Trim());
+
+        if (user is null || !await userManager.CheckPasswordAsync(user, request.Password))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Type = "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+                Title = "Invalid username or password.",
+                Status = StatusCodes.Status401Unauthorized,
+            });
+        }
+
+        var token = jwtTokenService.CreateToken(user);
+        return Ok(new AuthResponse(
+            token.AccessToken,
+            token.ExpiresAt,
+            new UserResponse(user.Id, user.UserName ?? string.Empty)));
+    }
+
     [HttpPost("register")]
     [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
