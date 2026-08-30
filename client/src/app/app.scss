@@ -1,0 +1,17 @@
+.navbar-brand {
+  max-width: calc(100vw - 5.5rem);
+}
+
+.navbar-brand span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-link.active {
+  font-weight: 600;
+}
+
+main {
+  min-width: 0;
+}

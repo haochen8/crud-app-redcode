@@ -7,4 +7,13 @@ body {
   margin: 0;
   background: var(--bs-body-bg);
   color: var(--bs-body-color);
+  overflow-x: hidden;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }

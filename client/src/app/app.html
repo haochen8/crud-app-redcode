@@ -1,9 +1,90 @@
-<main class="container py-5">
-  <section class="p-4 p-md-5 bg-body-tertiary border rounded-3" aria-labelledby="app-title">
-    <i class="fa-solid fa-book-open fa-2x text-primary mb-3" aria-hidden="true"></i>
-    <h1 id="app-title" class="display-6">{{ title() }}</h1>
-    <p class="lead mb-0">Angular 20 client foundation is ready.</p>
-  </section>
+<header>
+  <nav class="navbar navbar-expand-md bg-primary navbar-dark shadow-sm" aria-label="Main navigation">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/books" (click)="closeMenu()">
+        <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+        <span>{{ title() }}</span>
+      </a>
 
+      <button
+        class="navbar-toggler"
+        type="button"
+        aria-controls="main-navigation"
+        aria-label="Toggle navigation"
+        [attr.aria-expanded]="isMenuOpen()"
+        (click)="toggleMenu()"
+      >
+        <span class="navbar-toggler-icon" aria-hidden="true"></span>
+      </button>
+
+      <div id="main-navigation" class="collapse navbar-collapse" [class.show]="isMenuOpen()">
+        <ul class="navbar-nav me-auto mb-2 mb-md-0">
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/books"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              (click)="closeMenu()"
+            >
+              <i class="fa-solid fa-book me-1" aria-hidden="true"></i>
+              Books
+            </a>
+          </li>
+          <li class="nav-item">
+            <a
+              class="nav-link"
+              routerLink="/quotes"
+              routerLinkActive="active"
+              ariaCurrentWhenActive="page"
+              (click)="closeMenu()"
+            >
+              <i class="fa-solid fa-quote-left me-1" aria-hidden="true"></i>
+              My Quotes
+            </a>
+          </li>
+        </ul>
+
+        <ul class="navbar-nav">
+          @if (isAuthenticated()) {
+            <li class="nav-item">
+              <button class="btn btn-link nav-link" type="button" (click)="logout()">
+                <i class="fa-solid fa-right-from-bracket me-1" aria-hidden="true"></i>
+                Logout
+              </button>
+            </li>
+          } @else {
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/login"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+              >
+                <i class="fa-solid fa-right-to-bracket me-1" aria-hidden="true"></i>
+                Login
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                routerLink="/register"
+                routerLinkActive="active"
+                ariaCurrentWhenActive="page"
+                (click)="closeMenu()"
+              >
+                <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>
+                Register
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="container py-4 py-md-5">
   <router-outlet />
 </main>
