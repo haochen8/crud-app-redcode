@@ -2,6 +2,7 @@ import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
+import { AuthService } from './core/auth/auth.service';
 
 @Component({
   selector: 'app-root',
@@ -11,9 +12,10 @@ import { filter } from 'rxjs';
 })
 export class App {
   protected readonly title = signal('Book & Quotes');
-  protected readonly isAuthenticated = signal(false);
   protected readonly isMenuOpen = signal(false);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  protected readonly isAuthenticated = this.authService.isAuthenticated;
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -34,7 +36,7 @@ export class App {
   }
 
   protected logout(): void {
-    this.isAuthenticated.set(false);
+    this.authService.logout();
     void this.router.navigateByUrl('/login');
   }
 }

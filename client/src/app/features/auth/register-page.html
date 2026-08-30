@@ -1,0 +1,91 @@
+<section class="mx-auto" style="max-width: 32rem" aria-labelledby="register-title">
+  <div class="card shadow-sm">
+    <div class="card-body p-4 p-md-5">
+      <h1 id="register-title" class="h2 mb-2">Create Account</h1>
+      <p class="text-body-secondary">Register to start managing your personal collection.</p>
+
+      @if (errorMessage(); as message) {
+        <div class="alert alert-danger" role="alert">{{ message }}</div>
+      }
+
+      <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+        <div class="mb-3">
+          <label class="form-label" for="register-user-name">Username</label>
+          <input
+            id="register-user-name"
+            class="form-control"
+            [class.is-invalid]="registerForm.controls.userName.touched && registerForm.controls.userName.invalid"
+            type="text"
+            formControlName="userName"
+            autocomplete="username"
+            [attr.aria-invalid]="registerForm.controls.userName.touched && registerForm.controls.userName.invalid"
+            aria-describedby="register-user-name-error"
+          />
+          @if (registerForm.controls.userName.touched && registerForm.controls.userName.invalid) {
+            <div id="register-user-name-error" class="invalid-feedback">
+              Username must contain between 3 and 50 characters.
+            </div>
+          }
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label" for="register-password">Password</label>
+          <input
+            id="register-password"
+            class="form-control"
+            [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+            type="password"
+            formControlName="password"
+            autocomplete="new-password"
+            [attr.aria-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+            aria-describedby="register-password-help register-password-error"
+          />
+          <div id="register-password-help" class="form-text">
+            Use 8–100 characters with uppercase, lowercase, and a number.
+          </div>
+          @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
+            <div id="register-password-error" class="invalid-feedback">Enter a password that meets all requirements.</div>
+          }
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label" for="register-confirm-password">Confirm Password</label>
+          <input
+            id="register-confirm-password"
+            class="form-control"
+            [class.is-invalid]="
+              registerForm.controls.confirmPassword.touched &&
+              (registerForm.controls.confirmPassword.invalid || registerForm.hasError('passwordMismatch'))
+            "
+            type="password"
+            formControlName="confirmPassword"
+            autocomplete="new-password"
+            [attr.aria-invalid]="
+              registerForm.controls.confirmPassword.touched &&
+              (registerForm.controls.confirmPassword.invalid || registerForm.hasError('passwordMismatch'))
+            "
+            aria-describedby="register-confirm-password-error"
+          />
+          @if (
+            registerForm.controls.confirmPassword.touched &&
+            (registerForm.controls.confirmPassword.invalid || registerForm.hasError('passwordMismatch'))
+          ) {
+            <div id="register-confirm-password-error" class="invalid-feedback">Passwords must match.</div>
+          }
+        </div>
+
+        <button class="btn btn-primary w-100" type="submit" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            Creating account…
+          } @else {
+            <i class="fa-solid fa-user-plus me-1" aria-hidden="true"></i>
+            Create Account
+          }
+        </button>
+      </form>
+
+      <p class="text-center mt-4 mb-0">Already registered? <a routerLink="/login">Go to login</a>.</p>
+    </div>
+  </div>
+</section>
