@@ -7,6 +7,10 @@
 *.sln.docstates
 TestResults/
 coverage/
+playwright-report/
+test-results/
+blob-report/
+.e2e-data/
 
 # Local databases
 *.db
@@ -48,4 +52,3 @@ yarn-debug.log*
 yarn-error.log*
 *.tmp
 *.swp
-
