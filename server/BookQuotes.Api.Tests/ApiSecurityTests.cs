@@ -6,8 +6,10 @@ using System.Security.Claims;
 using System.Text;
 using BookQuotes.Api.Data;
 using BookQuotes.Api.Contracts.Auth;
+using BookQuotes.Api.Contracts.Books;
 using BookQuotes.Api.Contracts.Quotes;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -75,6 +77,67 @@ public sealed class ApiSecurityTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Registration_ReturnsCreatedAndRejectsDuplicateUserName()
+    {
+        var uniqueResponse = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            userName = "new-user",
+            password = "StrongPass1",
+            confirmPassword = "StrongPass1",
+        });
+
+        Assert.Equal(HttpStatusCode.Created, uniqueResponse.StatusCode);
+        var createdUser = Assert.IsType<UserResponse>(
+            await uniqueResponse.Content.ReadFromJsonAsync<UserResponse>());
+        Assert.Equal("new-user", createdUser.UserName);
+        Assert.False(string.IsNullOrWhiteSpace(createdUser.Id));
+
+        var duplicateResponse = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            userName = "new-user",
+            password = "StrongPass1",
+            confirmPassword = "StrongPass1",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, duplicateResponse.StatusCode);
+        var problem = await duplicateResponse.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.Contains("userName", Assert.IsType<ValidationProblemDetails>(problem).Errors.Keys);
+    }
+
+    [Fact]
+    public async Task Login_ReturnsTokenAndUserForValidCredentials()
+    {
+        var response = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            userName = "security-user",
+            password = "StrongPass1",
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var auth = Assert.IsType<AuthResponse>(
+            await response.Content.ReadFromJsonAsync<AuthResponse>());
+        Assert.False(string.IsNullOrWhiteSpace(auth.AccessToken));
+        Assert.True(auth.ExpiresAt > DateTimeOffset.UtcNow);
+        Assert.Equal("security-user", auth.User.UserName);
+    }
+
+    [Theory]
+    [InlineData("security-user", "WrongPass1")]
+    [InlineData("missing-user", "StrongPass1")]
+    public async Task Login_ReturnsUnauthorizedForInvalidCredentials(string userName, string password)
+    {
+        var response = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            userName,
+            password,
+        });
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.Equal("Invalid username or password.", Assert.IsType<ProblemDetails>(problem).Title);
+    }
+
+    [Fact]
     public async Task Books_AcceptsValidToken()
     {
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -82,6 +145,104 @@ public sealed class ApiSecurityTests : IAsyncLifetime
         var response = await client.GetAsync("/api/books");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Books_SupportCompleteCrudWithExpectedStatusCodes()
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var initialBooks = await client.GetFromJsonAsync<List<BookResponse>>("/api/books");
+        Assert.Equal(3, Assert.IsType<List<BookResponse>>(initialBooks).Count);
+
+        var createResponse = await client.PostAsJsonAsync("/api/books", new
+        {
+            title = "  Kindred  ",
+            author = "  Octavia E. Butler  ",
+            publishedDate = "1979-06-01",
+        });
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = Assert.IsType<BookResponse>(
+            await createResponse.Content.ReadFromJsonAsync<BookResponse>());
+        Assert.Equal("Kindred", created.Title);
+        Assert.Equal("Octavia E. Butler", created.Author);
+        Assert.EndsWith($"/api/Books/{created.Id}", createResponse.Headers.Location?.ToString());
+
+        var getResponse = await client.GetAsync($"/api/books/{created.Id}");
+        Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+        Assert.Equal(
+            created,
+            await getResponse.Content.ReadFromJsonAsync<BookResponse>());
+
+        var updateResponse = await client.PutAsJsonAsync($"/api/books/{created.Id}", new
+        {
+            title = "Kindred (Updated)",
+            author = "Octavia E. Butler",
+            publishedDate = "1979-06-01",
+        });
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updated = Assert.IsType<BookResponse>(
+            await updateResponse.Content.ReadFromJsonAsync<BookResponse>());
+        Assert.Equal("Kindred (Updated)", updated.Title);
+
+        Assert.Equal(
+            HttpStatusCode.NoContent,
+            (await client.DeleteAsync($"/api/books/{created.Id}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.GetAsync($"/api/books/{created.Id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Books_RejectInvalidRequests()
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var invalidCreate = await client.PostAsJsonAsync("/api/books", new
+        {
+            title = "   ",
+            author = "Test Author",
+            publishedDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)),
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, invalidCreate.StatusCode);
+        var createProblem = await invalidCreate.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        var createErrors = Assert.IsType<ValidationProblemDetails>(createProblem).Errors;
+        Assert.Contains("Title", createErrors.Keys);
+        Assert.Contains("PublishedDate", createErrors.Keys);
+
+        var invalidUpdate = await client.PutAsJsonAsync("/api/books/1", new
+        {
+            title = "Valid title",
+            author = "   ",
+            publishedDate = "2000-01-01",
+        });
+        Assert.Equal(HttpStatusCode.BadRequest, invalidUpdate.StatusCode);
+        var updateProblem = await invalidUpdate.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+        Assert.Contains(
+            "Author",
+            Assert.IsType<ValidationProblemDetails>(updateProblem).Errors.Keys);
+    }
+
+    [Fact]
+    public async Task Books_ReturnNotFoundForUnknownIds()
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        const int unknownId = 999999;
+
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.GetAsync($"/api/books/{unknownId}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.PutAsJsonAsync($"/api/books/{unknownId}", new
+            {
+                title = "Unknown Book",
+                author = "Unknown Author",
+                publishedDate = "2000-01-01",
+            })).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.DeleteAsync($"/api/books/{unknownId}")).StatusCode);
     }
 
     [Fact]
