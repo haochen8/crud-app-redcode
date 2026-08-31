@@ -6,6 +6,6 @@ public sealed class Quote
     public required string Text { get; set; }
     public required string Author { get; set; }
     public required string UserId { get; set; }
-    public required ApplicationUser User { get; set; }
+    public ApplicationUser User { get; set; } = null!;
     public DateTimeOffset CreatedAt { get; set; }
 }

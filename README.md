@@ -66,6 +66,8 @@ For deployed environments, provide the same value through a secret environment v
 
 The API validates each token's signature, issuer, audience, and lifetime without a clock-skew grace period. CRUD endpoints require a valid Bearer token, while registration, login, health, and development OpenAPI endpoints remain public. The default CORS policy permits only the Angular development origin (`http://localhost:4200`); configure additional deployment origins through `Cors__AllowedOrigins__0`, `Cors__AllowedOrigins__1`, and so on.
 
+Quote endpoints always scope records to the authenticated token's subject. Requests for missing or another user's quote consistently return `404 Not Found`, avoiding disclosure that a foreign record exists. Quote create/update payloads contain only text and author; ownership is assigned by the API.
+
 ## Frontend development
 
 Install dependencies, start the development server, run tests, and create a production build:

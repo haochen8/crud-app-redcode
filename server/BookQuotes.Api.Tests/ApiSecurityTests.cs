@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using BookQuotes.Api.Data;
 using BookQuotes.Api.Contracts.Auth;
+using BookQuotes.Api.Contracts.Quotes;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -159,6 +160,98 @@ public sealed class ApiSecurityTests : IAsyncLifetime
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         Assert.False(await dbContext.Users.AnyAsync(user => user.UserName == "invalid-user"));
         Assert.Equal(5, await dbContext.Quotes.CountAsync());
+    }
+
+    [Fact]
+    public async Task Quotes_RequireAuthenticationAndSupportCompleteCrud()
+    {
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/quotes")).StatusCode);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var starterQuotes = await client.GetFromJsonAsync<List<QuoteResponse>>("/api/quotes");
+        Assert.Equal(5, starterQuotes?.Count);
+
+        var createResponse = await client.PostAsJsonAsync("/api/quotes", new
+        {
+            text = "A new test quote.",
+            author = "Test Author",
+        });
+        Assert.Equal(HttpStatusCode.Created, createResponse.StatusCode);
+        var created = Assert.IsType<QuoteResponse>(
+            await createResponse.Content.ReadFromJsonAsync<QuoteResponse>());
+
+        var updateResponse = await client.PutAsJsonAsync($"/api/quotes/{created.Id}", new
+        {
+            text = "An updated test quote.",
+            author = "Updated Author",
+        });
+        Assert.Equal(HttpStatusCode.OK, updateResponse.StatusCode);
+        var updated = Assert.IsType<QuoteResponse>(
+            await updateResponse.Content.ReadFromJsonAsync<QuoteResponse>());
+        Assert.Equal("An updated test quote.", updated.Text);
+
+        Assert.Equal(
+            HttpStatusCode.NoContent,
+            (await client.DeleteAsync($"/api/quotes/{created.Id}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.GetAsync($"/api/quotes/{created.Id}")).StatusCode);
+    }
+
+    [Fact]
+    public async Task Quotes_ReturnNotFoundForForeignIdsAndIgnoreClientOwnership()
+    {
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var firstUsersQuotes = await client.GetFromJsonAsync<List<QuoteResponse>>("/api/quotes");
+        var foreignQuoteId = Assert.IsType<List<QuoteResponse>>(firstUsersQuotes)[0].Id;
+
+        (await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            userName = "second-user",
+            password = "StrongPass1",
+            confirmPassword = "StrongPass1",
+        })).EnsureSuccessStatusCode();
+        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
+        {
+            userName = "second-user",
+            password = "StrongPass1",
+        });
+        loginResponse.EnsureSuccessStatusCode();
+        var secondSession = Assert.IsType<AuthResponse>(
+            await loginResponse.Content.ReadFromJsonAsync<AuthResponse>());
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            secondSession.AccessToken);
+
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.GetAsync($"/api/quotes/{foreignQuoteId}")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.PutAsJsonAsync($"/api/quotes/{foreignQuoteId}", new
+            {
+                text = "Attempted overwrite",
+                author = "Second User",
+            })).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            (await client.DeleteAsync($"/api/quotes/{foreignQuoteId}")).StatusCode);
+
+        var maliciousCreate = await client.PostAsJsonAsync("/api/quotes", new
+        {
+            text = "Server-owned quote",
+            author = "Second User",
+            userId = "a-client-supplied-owner-id",
+        });
+        maliciousCreate.EnsureSuccessStatusCode();
+        var created = Assert.IsType<QuoteResponse>(
+            await maliciousCreate.Content.ReadFromJsonAsync<QuoteResponse>());
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.Equal(
+            secondSession.User.Id,
+            (await dbContext.Quotes.SingleAsync(quote => quote.Id == created.Id)).UserId);
     }
 
     public async Task DisposeAsync()
