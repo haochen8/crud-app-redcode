@@ -8,6 +8,7 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Book> Books => Set<Book>();
+    public DbSet<Quote> Quotes => Set<Quote>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -28,6 +29,30 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
             book.Property(item => item.CreatedAt)
                 .IsRequired();
+        });
+
+        builder.Entity<Quote>(quote =>
+        {
+            quote.Property(item => item.Text)
+                .HasMaxLength(500)
+                .IsRequired();
+
+            quote.Property(item => item.Author)
+                .HasMaxLength(120)
+                .IsRequired();
+
+            quote.Property(item => item.UserId)
+                .IsRequired();
+
+            quote.Property(item => item.CreatedAt)
+                .IsRequired();
+
+            quote.HasIndex(item => item.UserId);
+
+            quote.HasOne(item => item.User)
+                .WithMany(user => user.Quotes)
+                .HasForeignKey(item => item.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

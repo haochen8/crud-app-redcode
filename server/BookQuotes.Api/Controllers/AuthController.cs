@@ -1,5 +1,6 @@
 using BookQuotes.Api.Auth;
 using BookQuotes.Api.Contracts.Auth;
+using BookQuotes.Api.Data;
 using BookQuotes.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -12,7 +13,8 @@ namespace BookQuotes.Api.Controllers;
 [AllowAnonymous]
 public sealed class AuthController(
     UserManager<ApplicationUser> userManager,
-    IJwtTokenService jwtTokenService) : ControllerBase
+    IJwtTokenService jwtTokenService,
+    ApplicationDbContext dbContext) : ControllerBase
 {
     [HttpPost("login")]
     [ProducesResponseType<AuthResponse>(StatusCodes.Status200OK)]
@@ -45,6 +47,7 @@ public sealed class AuthController(
         RegisterRequest request,
         CancellationToken cancellationToken)
     {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
         var user = new ApplicationUser
         {
             UserName = request.UserName.Trim(),
@@ -59,6 +62,10 @@ public sealed class AuthController(
             problemDetails.Extensions["traceId"] = HttpContext.TraceIdentifier;
             return ValidationProblem(problemDetails);
         }
+
+        dbContext.Quotes.AddRange(StarterQuoteCatalog.CreateFor(user, DateTimeOffset.UtcNow));
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return StatusCode(
             StatusCodes.Status201Created,

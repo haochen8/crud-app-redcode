@@ -4,10 +4,13 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
+using BookQuotes.Api.Data;
 using BookQuotes.Api.Contracts.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace BookQuotes.Api.Tests;
@@ -121,6 +124,41 @@ public sealed class ApiSecurityTests : IAsyncLifetime
         var deniedResponse = await client.SendAsync(deniedRequest);
 
         Assert.False(deniedResponse.Headers.Contains("Access-Control-Allow-Origin"));
+    }
+
+    [Fact]
+    public async Task Registration_CreatesExactlyFiveQuotesOwnedByTheNewUser()
+    {
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var user = await dbContext.Users.SingleAsync(item => item.UserName == "security-user");
+        var quotes = await dbContext.Quotes
+            .Where(quote => quote.UserId == user.Id)
+            .OrderBy(quote => quote.Id)
+            .ToListAsync();
+
+        Assert.Equal(5, quotes.Count);
+        Assert.All(quotes, quote => Assert.Equal(user.Id, quote.UserId));
+        Assert.Equal(
+            StarterQuoteCatalog.All.Select(quote => (quote.Text, quote.Author)),
+            quotes.Select(quote => (quote.Text, quote.Author)));
+    }
+
+    [Fact]
+    public async Task FailedRegistration_LeavesNoUserOrOrphanedQuotes()
+    {
+        var response = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            userName = "invalid-user",
+            password = "weak",
+            confirmPassword = "weak",
+        });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await using var scope = factory.Services.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        Assert.False(await dbContext.Users.AnyAsync(user => user.UserName == "invalid-user"));
+        Assert.Equal(5, await dbContext.Quotes.CountAsync());
     }
 
     public async Task DisposeAsync()
