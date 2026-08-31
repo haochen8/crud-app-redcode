@@ -46,6 +46,23 @@
         </ul>
 
         <ul class="navbar-nav">
+          <li class="nav-item me-md-2">
+            <button
+              class="btn btn-link nav-link"
+              type="button"
+              [attr.aria-label]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+              [attr.title]="theme() === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+              (click)="toggleTheme()"
+            >
+              <i
+                class="fa-solid"
+                [class.fa-sun]="theme() === 'dark'"
+                [class.fa-moon]="theme() === 'light'"
+                aria-hidden="true"
+              ></i>
+              <span class="d-md-none ms-1">{{ theme() === 'dark' ? 'Light Theme' : 'Dark Theme' }}</span>
+            </button>
+          </li>
           @if (isAuthenticated()) {
             <li class="nav-item">
               <button class="btn btn-link nav-link" type="button" (click)="logout()">

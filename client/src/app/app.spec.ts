@@ -45,4 +45,17 @@ describe('App', () => {
     expect(button.getAttribute('aria-expanded')).toBe('true');
     expect(navigation.classList).toContain('show');
   });
+
+  it('should expose an accessible control that switches the global theme', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const initialTheme = document.documentElement.getAttribute('data-bs-theme');
+    const button = fixture.nativeElement.querySelector('button[title*="theme"]') as HTMLButtonElement;
+
+    expect(button.getAttribute('aria-label')).toContain('theme');
+    button.click();
+    fixture.detectChanges();
+
+    expect(document.documentElement.getAttribute('data-bs-theme')).not.toBe(initialTheme);
+  });
 });

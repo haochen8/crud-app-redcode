@@ -5,6 +5,20 @@
   <title>Book &amp; Quotes</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script>
+    (() => {
+      try {
+        const storedTheme = localStorage.getItem('book-quotes.theme');
+        const theme = storedTheme === 'light' || storedTheme === 'dark'
+          ? storedTheme
+          : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        document.documentElement.style.colorScheme = theme;
+      } catch {
+        document.documentElement.setAttribute('data-bs-theme', 'light');
+      }
+    })();
+  </script>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
