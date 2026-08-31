@@ -32,6 +32,20 @@ describe('App', () => {
     expect(compiled.querySelector('.fa-book-open')).toBeTruthy();
   });
 
+  it('should provide a skip link to the focusable main landmark', () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('a[href="#main-content"]')?.textContent).toContain(
+      'Skip to main content',
+    );
+    expect(compiled.querySelector('main')?.getAttribute('tabindex')).toBe('-1');
+
+    (compiled.querySelector('a[href="#main-content"]') as HTMLAnchorElement).click();
+    expect(document.activeElement).toBe(compiled.querySelector('main'));
+  });
+
   it('should toggle the mobile navigation with accessible state', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

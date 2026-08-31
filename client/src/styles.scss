@@ -3,6 +3,14 @@ body {
   min-height: 100%;
 }
 
+:root {
+  --app-focus-color: #172b4d;
+}
+
+[data-bs-theme='dark'] {
+  --app-focus-color: #ffda6a;
+}
+
 body {
   margin: 0;
   background: var(--bs-body-bg);
@@ -16,4 +24,9 @@ input,
 select,
 textarea {
   touch-action: manipulation;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--app-focus-color);
+  outline-offset: 3px;
 }

@@ -39,7 +39,7 @@ describe('BookFormPage', () => {
     const result = new Subject<Book>();
     bookService.create.and.returnValue(result);
     const router = TestBed.inject(Router);
-    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    spyOn(router, 'navigate').and.resolveTo(true);
     const fixture = TestBed.createComponent(BookFormPage);
     fixture.detectChanges();
     fillValidForm(fixture.nativeElement);
@@ -52,12 +52,14 @@ describe('BookFormPage', () => {
       author: 'Octavia E. Butler',
       publishedDate: '1979-06-01',
     });
-    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(router.navigate).not.toHaveBeenCalled();
 
     result.next(savedBook);
     result.complete();
 
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/books');
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/books'], {
+      state: { successMessage: 'Book added successfully.' },
+    });
   });
 
   it('preserves values and displays a safe server error', () => {
@@ -90,7 +92,7 @@ describe('BookFormPage', () => {
     bookService.getById.and.returnValue(of(savedBook));
     bookService.update.and.returnValue(of({ ...savedBook, title: 'Kindred Updated' }));
     const router = TestBed.inject(Router);
-    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+    spyOn(router, 'navigate').and.resolveTo(true);
     const fixture = TestBed.createComponent(BookFormPage);
     fixture.detectChanges();
 
@@ -105,7 +107,9 @@ describe('BookFormPage', () => {
       author: 'Octavia E. Butler',
       publishedDate: '1979-06-01',
     });
-    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/books');
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/books'], {
+      state: { successMessage: 'Book updated successfully.' },
+    });
   });
 
   it('handles an invalid edit route without making a request', () => {

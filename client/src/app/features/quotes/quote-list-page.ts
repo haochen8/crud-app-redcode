@@ -31,6 +31,7 @@ export class QuoteListPage {
   protected readonly editingId = signal<number | null>(null);
   protected readonly isFormOpen = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
+  protected readonly successMessage = signal<string | null>(null);
   protected readonly quoteForm = this.formBuilder.nonNullable.group({
     text: ['', [Validators.required, notWhitespace, Validators.maxLength(500)]],
     author: ['', [Validators.required, notWhitespace, Validators.maxLength(120)]],
@@ -55,10 +56,15 @@ export class QuoteListPage {
       });
   }
 
+  protected dismissSuccess(): void {
+    this.successMessage.set(null);
+  }
+
   protected startCreate(): void {
     this.editingId.set(null);
     this.quoteForm.reset();
     this.errorMessage.set(null);
+    this.successMessage.set(null);
     this.isFormOpen.set(true);
   }
 
@@ -66,6 +72,7 @@ export class QuoteListPage {
     this.editingId.set(quote.id);
     this.quoteForm.setValue({ text: quote.text, author: quote.author });
     this.errorMessage.set(null);
+    this.successMessage.set(null);
     this.isFormOpen.set(true);
   }
 
@@ -102,6 +109,9 @@ export class QuoteListPage {
               : quotes.map((quote) => (quote.id === savedQuote.id ? savedQuote : quote)),
           );
           this.cancelForm();
+          this.successMessage.set(
+            editingId === null ? 'Quote added successfully.' : 'Quote updated successfully.',
+          );
         },
         error: (error: unknown) => this.errorMessage.set(this.getErrorMessage(error)),
       });
@@ -121,7 +131,10 @@ export class QuoteListPage {
         finalize(() => this.deletingId.set(null)),
       )
       .subscribe({
-        next: () => this.quotes.update((quotes) => quotes.filter((item) => item.id !== quote.id)),
+        next: () => {
+          this.quotes.update((quotes) => quotes.filter((item) => item.id !== quote.id));
+          this.successMessage.set('Quote deleted successfully.');
+        },
         error: (error: unknown) => this.errorMessage.set(this.getErrorMessage(error)),
       });
   }

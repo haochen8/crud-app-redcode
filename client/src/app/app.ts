@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
@@ -15,6 +16,7 @@ export class App {
   protected readonly title = signal('Book & Quotes');
   protected readonly isMenuOpen = signal(false);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   protected readonly isAuthenticated = this.authService.isAuthenticated;
@@ -32,6 +34,11 @@ export class App {
 
   protected toggleMenu(): void {
     this.isMenuOpen.update((isOpen) => !isOpen);
+  }
+
+  protected skipToMain(event: Event): void {
+    event.preventDefault();
+    this.document.getElementById('main-content')?.focus();
   }
 
   protected closeMenu(): void {

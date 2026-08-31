@@ -1,3 +1,7 @@
+<a class="visually-hidden-focusable skip-link" href="#main-content" (click)="skipToMain($event)">
+  Skip to main content
+</a>
+
 <header>
   <nav class="navbar navbar-expand-md bg-primary navbar-dark shadow-sm" aria-label="Main navigation">
     <div class="container">
@@ -102,6 +106,6 @@
   </nav>
 </header>
 
-<main class="container py-4 py-md-5">
+<main id="main-content" class="container py-4 py-md-5" tabindex="-1">
   <router-outlet />
 </main>

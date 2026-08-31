@@ -10,6 +10,18 @@
     </a>
   </div>
 
+  @if (successMessage(); as message) {
+    <div class="alert alert-success alert-dismissible" role="status">
+      {{ message }}
+      <button
+        class="btn-close"
+        type="button"
+        aria-label="Dismiss success message"
+        (click)="dismissSuccess()"
+      ></button>
+    </div>
+  }
+
   @if (errorMessage(); as message) {
     <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
       <span>{{ message }}</span>

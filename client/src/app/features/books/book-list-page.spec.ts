@@ -78,7 +78,11 @@ describe('BookListPage', () => {
     fixture.detectChanges();
 
     expect(bookService.delete).toHaveBeenCalledOnceWith(1);
-    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Kindred');
+    expect(fixture.nativeElement.querySelectorAll('article.card').length).toBe(0);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('No books yet');
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+      'was deleted',
+    );
   });
 
   it('preserves a book when confirmed deletion fails', () => {

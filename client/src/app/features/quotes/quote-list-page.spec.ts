@@ -61,6 +61,9 @@ describe('QuoteListPage', () => {
       author: 'New Author',
     });
     expect(fixture.nativeElement.querySelectorAll('article.quote-card').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+      'added successfully',
+    );
   });
 
   it('edits an existing quote in local state', () => {
@@ -80,6 +83,9 @@ describe('QuoteListPage', () => {
       author: 'Author 1',
     });
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Updated quote');
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+      'updated successfully',
+    );
   });
 
   it('requires confirmation and removes only a successfully deleted quote', () => {
@@ -99,6 +105,9 @@ describe('QuoteListPage', () => {
 
     expect(quoteService.delete).toHaveBeenCalledOnceWith(1);
     expect(fixture.nativeElement.querySelectorAll('article.quote-card').length).toBe(4);
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain(
+      'deleted successfully',
+    );
   });
 
   it('shows API errors clearly', () => {
