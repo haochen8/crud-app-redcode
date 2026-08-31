@@ -66,6 +66,21 @@ describe('QuoteListPage', () => {
     );
   });
 
+  it('does not submit an invalid quote form and exposes field errors', () => {
+    quoteService.getAll.and.returnValue(of(starterQuotes));
+    const fixture = TestBed.createComponent(QuoteListPage);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('button.btn-primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    submit(fixture.nativeElement);
+    fixture.detectChanges();
+
+    expect(quoteService.create).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelectorAll('.is-invalid').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('[aria-invalid="true"]').length).toBe(2);
+  });
+
   it('edits an existing quote in local state', () => {
     quoteService.getAll.and.returnValue(of(starterQuotes));
     quoteService.update.and.returnValue(of({ ...starterQuotes[0], text: 'Updated quote' }));
