@@ -7,10 +7,25 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
 {
     public ApplicationDbContext CreateDbContext(string[] args)
     {
-        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseSqlite("Data Source=bookquotes.db")
-            .Options;
+        var provider = Environment.GetEnvironmentVariable("Database__Provider") ?? "Sqlite";
+        var connectionString = Environment.GetEnvironmentVariable(
+            "ConnectionStrings__DefaultConnection") ?? "Data Source=bookquotes.db";
+        var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
 
-        return new ApplicationDbContext(options);
+        if (provider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+        {
+            optionsBuilder.UseSqlServer(connectionString);
+        }
+        else if (provider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            optionsBuilder.UseSqlite(connectionString);
+        }
+        else
+        {
+            throw new InvalidOperationException(
+                $"Unsupported database provider '{provider}'. Use 'Sqlite' or 'SqlServer'.");
+        }
+
+        return new ApplicationDbContext(optionsBuilder.Options);
     }
 }

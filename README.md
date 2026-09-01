@@ -153,7 +153,16 @@ Open `http://localhost:4200`, create an account, and log in. Registration create
 quotes for the new user. The default development CORS policy permits this Angular origin.
 
 Development builds call `http://localhost:5047/api`; production builds call
-`https://localhost:7047/api`. The values are defined in `client/src/environments/`.
+the same origin at `/api`. The values are defined in `client/src/environments/`.
+
+## Deploy to Azure
+
+The production build can run as one Azure App Service: ASP.NET Core serves the compiled Angular
+application and API from the same HTTPS origin, while Azure SQL stores persistent data. The
+repository includes a manually triggered GitHub Actions deployment workflow.
+
+Follow the complete [Azure deployment guide](docs/azure-deployment.md) to create the resources,
+configure secrets, deploy, verify, troubleshoot, and remove the resources when finished.
 
 ## Authentication and JWT flow
 
@@ -249,7 +258,7 @@ dotnet build server/BookQuotes.sln --configuration Release --no-restore
 dotnet test server/BookQuotes.sln --configuration Release --no-build
 ```
 
-Run the Angular production build and its 43 unit tests without a backend:
+Run the Angular production build and its 45 unit tests without a backend:
 
 ```bash
 cd client

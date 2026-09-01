@@ -73,7 +73,27 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    var databaseProvider = builder.Configuration["Database:Provider"] ?? "Sqlite";
+    var databaseConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("The default database connection string is required.");
+
+    if (databaseProvider.Equals("SqlServer", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlServer(databaseConnectionString, sqlServerOptions =>
+            sqlServerOptions.EnableRetryOnFailure());
+        return;
+    }
+
+    if (databaseProvider.Equals("Sqlite", StringComparison.OrdinalIgnoreCase))
+    {
+        options.UseSqlite(databaseConnectionString);
+        return;
+    }
+
+    throw new InvalidOperationException(
+        $"Unsupported database provider '{databaseProvider}'. Use 'Sqlite' or 'SqlServer'.");
+});
 builder.Services
     .AddIdentityCore<ApplicationUser>(options =>
     {
@@ -99,12 +119,34 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseCors("AngularClient");
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHealthChecks("/health").AllowAnonymous();
+app.MapFallback(async context =>
+{
+    if (context.Request.Path.StartsWithSegments("/api"))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    var webRootPath = app.Environment.WebRootPath
+        ?? Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+    var indexPath = Path.Combine(webRootPath, "index.html");
+    if (!File.Exists(indexPath))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    context.Response.ContentType = "text/html; charset=utf-8";
+    await context.Response.SendFileAsync(indexPath);
+}).AllowAnonymous();
 
 await using (var scope = app.Services.CreateAsyncScope())
 {

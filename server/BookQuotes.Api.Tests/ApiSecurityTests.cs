@@ -56,7 +56,10 @@ public sealed class ApiSecurityTests : IAsyncLifetime
             password = "StrongPass1",
             confirmPassword = "StrongPass1",
         });
-        registerResponse.EnsureSuccessStatusCode();
+        Assert.True(
+            registerResponse.IsSuccessStatusCode,
+            $"Test user registration failed with {(int)registerResponse.StatusCode}: " +
+            await registerResponse.Content.ReadAsStringAsync());
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new
         {
@@ -74,6 +77,15 @@ public sealed class ApiSecurityTests : IAsyncLifetime
         var response = await client.GetAsync("/api/books");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnknownApiRoute_ReturnsNotFoundInsteadOfSpaDocument()
+    {
+        var response = await client.GetAsync("/api/not-a-real-route");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.NotEqual("text/html", response.Content.Headers.ContentType?.MediaType);
     }
 
     [Fact]
