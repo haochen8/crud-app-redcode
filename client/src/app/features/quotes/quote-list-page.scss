@@ -4,6 +4,80 @@
   overflow-wrap: anywhere;
 }
 
+.quotes-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 14%, rgb(255 255 255 / 22%), transparent 13rem),
+    linear-gradient(125deg, var(--app-soft-primary), color-mix(in srgb, #7d5ce7 12%, var(--bs-body-bg)));
+}
+
+.hero-watermark {
+  position: absolute;
+  right: 1rem;
+  bottom: -5rem;
+  color: color-mix(in srgb, var(--bs-primary) 10%, transparent);
+  font-size: 14rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.quotes-hero > :not(.hero-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+.quote-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  border-top: 1px solid color-mix(in srgb, var(--bs-primary) 16%, transparent);
+}
+
+.quote-count strong {
+  color: var(--bs-primary);
+  font-size: 1.4rem;
+}
+
+.quote-count span {
+  color: var(--bs-secondary-color);
+  font-size: 0.85rem;
+}
+
+.form-icon {
+  display: inline-grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.8rem;
+}
+
+.filter-bar {
+  background: color-mix(in srgb, var(--bs-body-bg) 94%, var(--bs-primary) 6%);
+}
+
+.quote-card {
+  border-top: 3px solid color-mix(in srgb, var(--bs-primary) 72%, transparent);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.quote-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--app-surface-shadow) !important;
+}
+
+.delete-panel {
+  background: color-mix(in srgb, var(--bs-danger-bg-subtle) 70%, transparent);
+}
+
 textarea {
   resize: vertical;
+}
+
+@media (max-width: 575.98px) {
+  .hero-watermark {
+    right: -2rem;
+    font-size: 10rem;
+  }
 }

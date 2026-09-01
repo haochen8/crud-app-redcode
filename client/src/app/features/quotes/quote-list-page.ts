@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -25,9 +25,11 @@ export class QuoteListPage {
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly quotes = signal<Quote[]>([]);
+  protected readonly searchTerm = signal('');
   protected readonly isLoading = signal(true);
   protected readonly isSaving = signal(false);
   protected readonly deletingId = signal<number | null>(null);
+  protected readonly pendingDeleteId = signal<number | null>(null);
   protected readonly editingId = signal<number | null>(null);
   protected readonly isFormOpen = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
@@ -35,6 +37,14 @@ export class QuoteListPage {
   protected readonly quoteForm = this.formBuilder.nonNullable.group({
     text: ['', [Validators.required, notWhitespace, Validators.maxLength(500)]],
     author: ['', [Validators.required, notWhitespace, Validators.maxLength(120)]],
+  });
+  protected readonly filteredQuotes = computed(() => {
+    const query = this.searchTerm().trim().toLocaleLowerCase();
+    return query
+      ? this.quotes().filter((quote) =>
+          `${quote.text} ${quote.author}`.toLocaleLowerCase().includes(query),
+        )
+      : this.quotes();
   });
 
   constructor() {
@@ -58,6 +68,14 @@ export class QuoteListPage {
 
   protected dismissSuccess(): void {
     this.successMessage.set(null);
+  }
+
+  protected updateSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+  }
+
+  protected clearSearch(): void {
+    this.searchTerm.set('');
   }
 
   protected startCreate(): void {
@@ -118,10 +136,7 @@ export class QuoteListPage {
   }
 
   protected deleteQuote(quote: Quote): void {
-    if (!globalThis.confirm(`Delete this quote by ${quote.author}? This action cannot be undone.`)) {
-      return;
-    }
-
+    this.pendingDeleteId.set(null);
     this.deletingId.set(quote.id);
     this.errorMessage.set(null);
     this.quoteService
@@ -137,6 +152,15 @@ export class QuoteListPage {
         },
         error: (error: unknown) => this.errorMessage.set(this.getErrorMessage(error)),
       });
+  }
+
+  protected requestDelete(quote: Quote): void {
+    this.pendingDeleteId.set(quote.id);
+    this.successMessage.set(null);
+  }
+
+  protected cancelDelete(): void {
+    this.pendingDeleteId.set(null);
   }
 
   private getErrorMessage(error: unknown): string {

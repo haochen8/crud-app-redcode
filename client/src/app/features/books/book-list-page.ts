@@ -1,6 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs';
@@ -19,12 +19,37 @@ export class BookListPage {
   private readonly router = inject(Router);
 
   protected readonly books = signal<Book[]>([]);
+  protected readonly searchTerm = signal('');
+  protected readonly sortBy = signal<'title' | 'author' | 'newest'>('title');
   protected readonly isLoading = signal(true);
   protected readonly deletingId = signal<number | null>(null);
+  protected readonly pendingDeleteId = signal<number | null>(null);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly successMessage = signal<string | null>(
     this.getNavigationSuccessMessage(),
   );
+  protected readonly authorCount = computed(
+    () => new Set(this.books().map((book) => book.author.toLocaleLowerCase())).size,
+  );
+  protected readonly filteredBooks = computed(() => {
+    const query = this.searchTerm().trim().toLocaleLowerCase();
+    const matchingBooks = query
+      ? this.books().filter((book) =>
+          `${book.title} ${book.author}`.toLocaleLowerCase().includes(query),
+        )
+      : [...this.books()];
+
+    return matchingBooks.sort((left, right) => {
+      switch (this.sortBy()) {
+        case 'author':
+          return left.author.localeCompare(right.author) || left.title.localeCompare(right.title);
+        case 'newest':
+          return right.publishedDate.localeCompare(left.publishedDate);
+        default:
+          return left.title.localeCompare(right.title);
+      }
+    });
+  });
 
   constructor() {
     this.loadBooks();
@@ -49,11 +74,29 @@ export class BookListPage {
     this.successMessage.set(null);
   }
 
+  protected updateSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+  }
+
+  protected updateSort(event: Event): void {
+    this.sortBy.set((event.target as HTMLSelectElement).value as 'title' | 'author' | 'newest');
+  }
+
+  protected clearSearch(): void {
+    this.searchTerm.set('');
+  }
+
+  protected requestDelete(book: Book): void {
+    this.pendingDeleteId.set(book.id);
+    this.successMessage.set(null);
+  }
+
+  protected cancelDelete(): void {
+    this.pendingDeleteId.set(null);
+  }
+
   protected deleteBook(book: Book): void {
-    const confirmed = globalThis.confirm(`Delete “${book.title}”? This action cannot be undone.`);
-    if (!confirmed) {
-      return;
-    }
+    this.pendingDeleteId.set(null);
 
     this.deletingId.set(book.id);
     this.errorMessage.set(null);

@@ -2,8 +2,93 @@
   overflow-wrap: anywhere;
 }
 
+.collection-hero {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 90% 10%, rgb(255 255 255 / 22%), transparent 14rem),
+    linear-gradient(125deg, var(--app-soft-primary), color-mix(in srgb, var(--app-soft-primary) 55%, var(--bs-body-bg)));
+}
+
+.hero-watermark {
+  position: absolute;
+  right: -2rem;
+  bottom: -4rem;
+  color: color-mix(in srgb, var(--bs-primary) 11%, transparent);
+  font-size: 13rem;
+  line-height: 1;
+  pointer-events: none;
+  transform: rotate(-8deg);
+}
+
+.collection-hero > :not(.hero-watermark) {
+  position: relative;
+  z-index: 1;
+}
+
+.collection-stats {
+  border-top: 1px solid color-mix(in srgb, var(--bs-primary) 16%, transparent);
+}
+
+.collection-stats div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.collection-stats strong {
+  color: var(--bs-primary);
+  font-size: 1.4rem;
+}
+
+.collection-stats span {
+  color: var(--bs-secondary-color);
+  font-size: 0.85rem;
+}
+
+.filter-bar {
+  background: color-mix(in srgb, var(--bs-body-bg) 94%, var(--bs-primary) 6%);
+}
+
+.sort-control {
+  min-width: 13rem;
+}
+
+.table {
+  --bs-table-bg: transparent;
+}
+
+.table-responsive {
+  background: var(--bs-body-bg);
+  box-shadow: 0 0.5rem 1.5rem rgb(28 53 87 / 6%);
+}
+
+.delete-panel,
+.delete-confirmation {
+  background: color-mix(in srgb, var(--bs-danger-bg-subtle) 70%, transparent);
+}
+
+.book-card {
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+}
+
 @media (min-width: 768px) {
   .table-responsive {
     overflow-x: auto;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .hero-watermark {
+    right: -3rem;
+    font-size: 9rem;
+  }
+
+  .collection-stats {
+    gap: 1rem !important;
   }
 }

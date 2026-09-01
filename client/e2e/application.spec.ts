@@ -12,7 +12,7 @@ async function registerAndLogin(page: Page, userName: string): Promise<void> {
   await expect(page).toHaveURL(/\/login\?registered=true$/);
   await expect(page.locator('[role="status"].alert-success')).toContainText('Account created');
   await page.getByLabel('Username').fill(userName);
-  await page.getByLabel('Password').fill(password);
+  await page.getByLabel('Password', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Login' }).click();
   await expect(page).toHaveURL(/\/books$/);
 }
@@ -22,7 +22,7 @@ test('registration, login, logout, and complete Books CRUD', async ({ page }) =>
 
   await page.getByRole('button', { name: 'Logout' }).click();
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sign in to your space' })).toBeVisible();
   const loginUserName = page.getByLabel('Username', { exact: true });
   await loginUserName.fill('books-e2e-user');
   await page.getByLabel('Password', { exact: true }).fill('WrongPass1');
@@ -55,8 +55,8 @@ test('registration, login, logout, and complete Books CRUD', async ({ page }) =>
 
   const updatedRow = page.getByRole('row', { name: /E2E Book Updated Test Author/ });
   await expect(updatedRow).toBeVisible();
-  page.once('dialog', (dialog) => dialog.accept());
   await updatedRow.getByRole('button', { name: 'Delete E2E Book Updated' }).click();
+  await updatedRow.getByRole('button', { name: 'Confirm' }).click();
   await expect(page.locator('[role="status"].alert-success')).toContainText('was deleted');
   await expect(page.getByRole('row', { name: /E2E Book Updated/ })).toHaveCount(0);
 });
@@ -87,8 +87,8 @@ test('five starter quotes and complete Quotes CRUD', async ({ page }) => {
   const updatedCard = page.locator('article.quote-card').filter({
     hasText: 'An updated E2E quote.',
   });
-  page.once('dialog', (dialog) => dialog.accept());
   await updatedCard.getByRole('button', { name: 'Delete' }).click();
+  await updatedCard.getByRole('button', { name: 'Confirm Delete' }).click();
   await expect(page.locator('[role="status"].alert-success')).toContainText(
     'Quote deleted successfully',
   );

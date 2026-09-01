@@ -1,8 +1,25 @@
-<section class="mx-auto" style="max-width: 48rem" [attr.aria-labelledby]="headingId">
-  <div class="card shadow-sm">
+<section class="book-form-shell mx-auto" [attr.aria-labelledby]="headingId">
+  <a class="back-link d-inline-flex align-items-center gap-2 mb-3" routerLink="/books">
+    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+    Back to Books
+  </a>
+  <div class="card shadow-sm overflow-hidden">
+    <div class="form-banner p-4 p-md-5 pb-md-4">
+      <div class="d-flex align-items-start gap-3">
+        <span class="form-icon soft-primary" aria-hidden="true">
+          <i class="fa-solid" [class.fa-book-medical]="!isEdit" [class.fa-pen-to-square]="isEdit"></i>
+        </span>
+        <div>
+          <p class="page-eyebrow">{{ isEdit ? 'Update your collection' : 'Grow your collection' }}</p>
+          <h1 [id]="headingId" class="h2 page-title">{{ isEdit ? 'Edit Book' : 'Add New Book' }}</h1>
+          <p class="text-body-secondary mb-0">
+            {{ isEdit ? 'Make changes and save when everything looks right.' : 'Add the essential details now—you can edit them later.' }}
+          </p>
+        </div>
+      </div>
+    </div>
     <div class="card-body p-4 p-md-5">
-      <h1 [id]="headingId" class="h2 mb-2">{{ isEdit ? 'Edit Book' : 'Add New Book' }}</h1>
-      <p class="text-body-secondary">All fields are required.</p>
+      <p class="small text-body-secondary mb-4"><i class="fa-solid fa-circle-info me-2" aria-hidden="true"></i>All fields are required.</p>
 
       @if (errorMessage(); as message) {
         <div class="alert alert-danger" role="alert">{{ message }}</div>
@@ -33,6 +50,7 @@
               Enter a title containing no more than 200 characters.
             </div>
           }
+          <div class="form-text text-end">{{ bookForm.controls.title.value.length }} / 200</div>
         </div>
 
         <div class="mb-3">
@@ -53,6 +71,7 @@
               Enter an author containing no more than 120 characters.
             </div>
           }
+          <div class="form-text text-end">{{ bookForm.controls.author.value.length }} / 120</div>
         </div>
 
         <div class="mb-4">
@@ -81,9 +100,9 @@
         </div>
 
         <div class="d-flex flex-column-reverse flex-sm-row justify-content-end gap-2">
-          <a class="btn btn-outline-secondary" routerLink="/books">Cancel</a>
+          <a class="btn btn-outline-secondary px-4" routerLink="/books">Cancel</a>
           <button
-            class="btn btn-primary"
+            class="btn btn-primary px-4"
             type="submit"
             [disabled]="isSubmitting() || (isEdit && bookId() === null)"
           >

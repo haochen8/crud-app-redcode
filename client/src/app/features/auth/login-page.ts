@@ -8,6 +8,7 @@ import { AuthService, getSafeAuthError } from '../../core/auth/auth.service';
   selector: 'app-login-page',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login-page.html',
+  styleUrl: './auth-page.scss',
 })
 export class LoginPage {
   private readonly formBuilder = inject(FormBuilder);
@@ -16,6 +17,7 @@ export class LoginPage {
   private readonly route = inject(ActivatedRoute);
 
   protected readonly isSubmitting = signal(false);
+  protected readonly showPassword = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registrationSucceeded =
     this.route.snapshot.queryParamMap.get('registered') === 'true';
@@ -23,6 +25,10 @@ export class LoginPage {
     userName: ['', [Validators.required]],
     password: ['', [Validators.required]],
   });
+
+  protected togglePassword(): void {
+    this.showPassword.update((isVisible) => !isVisible);
+  }
 
   protected submit(): void {
     if (this.loginForm.invalid || this.isSubmitting()) {

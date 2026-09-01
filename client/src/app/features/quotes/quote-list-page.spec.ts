@@ -103,10 +103,9 @@ describe('QuoteListPage', () => {
     );
   });
 
-  it('requires confirmation and removes only a successfully deleted quote', () => {
+  it('requires inline confirmation and removes only a successfully deleted quote', () => {
     quoteService.getAll.and.returnValue(of(starterQuotes));
     quoteService.delete.and.returnValue(of(undefined));
-    spyOn(globalThis, 'confirm').and.returnValues(false, true);
     const fixture = TestBed.createComponent(QuoteListPage);
     fixture.detectChanges();
     const deleteButton = fixture.nativeElement.querySelector(
@@ -114,8 +113,13 @@ describe('QuoteListPage', () => {
     ) as HTMLButtonElement;
 
     deleteButton.click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.delete-panel .btn-outline-secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
     expect(quoteService.delete).not.toHaveBeenCalled();
-    deleteButton.click();
+    (fixture.nativeElement.querySelector('.quote-card .btn-outline-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.delete-panel .btn-danger') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(quoteService.delete).toHaveBeenCalledOnceWith(1);
@@ -139,6 +143,20 @@ describe('QuoteListPage', () => {
     fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No quotes yet');
+  });
+
+  it('filters saved quotes by words or author', () => {
+    quoteService.getAll.and.returnValue(of(starterQuotes));
+    const fixture = TestBed.createComponent(QuoteListPage);
+    fixture.detectChanges();
+    const search = fixture.nativeElement.querySelector('#quote-search') as HTMLInputElement;
+
+    search.value = 'Author 4';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('article.quote-card').length).toBe(1);
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Starter quote 4');
   });
 
   function setInput(element: HTMLElement, selector: string, value: string): void {

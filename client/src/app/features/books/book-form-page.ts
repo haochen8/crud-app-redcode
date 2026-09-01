@@ -35,6 +35,7 @@ function getTodayValue(): string {
   selector: 'app-book-form-page',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './book-form-page.html',
+  styleUrl: './book-form-page.scss',
 })
 export class BookFormPage {
   private readonly route = inject(ActivatedRoute);

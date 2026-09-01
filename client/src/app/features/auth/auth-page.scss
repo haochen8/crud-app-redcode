@@ -1,0 +1,51 @@
+.auth-shell {
+  max-width: 64rem;
+}
+
+.auth-intro {
+  min-height: 36rem;
+  background:
+    radial-gradient(circle at 90% 5%, rgb(255 255 255 / 20%), transparent 14rem),
+    linear-gradient(145deg, #173f7a, #315da8 58%, #6047ad);
+  color: #fff;
+}
+
+.auth-intro p,
+.auth-intro li {
+  color: rgb(255 255 255 / 78%);
+}
+
+.auth-intro li + li {
+  margin-top: 0.75rem;
+}
+
+.auth-icon {
+  display: inline-grid;
+  width: 3.5rem;
+  height: 3.5rem;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 1rem;
+  background: rgb(255 255 255 / 13%);
+  font-size: 1.35rem;
+}
+
+.password-requirements li {
+  transition: color 140ms ease;
+}
+
+.password-requirements .fa-solid {
+  width: 1rem;
+  margin-right: 0.25rem;
+  font-size: 0.65rem;
+}
+
+.password-requirements .requirement-met {
+  color: var(--bs-success-text-emphasis);
+}
+
+@media (max-width: 991.98px) {
+  .auth-shell {
+    max-width: 34rem;
+  }
+}

@@ -56,25 +56,28 @@ describe('BookListPage', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Retry');
   });
 
-  it('does not delete when confirmation is cancelled', () => {
+  it('does not delete when inline confirmation is cancelled', () => {
     bookService.getAll.and.returnValue(of([book]));
-    spyOn(globalThis, 'confirm').and.returnValue(false);
     const fixture = TestBed.createComponent(BookListPage);
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('button.btn-outline-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Delete?');
+    (fixture.nativeElement.querySelector('.delete-confirmation .btn-outline-secondary') as HTMLButtonElement).click();
 
     expect(bookService.delete).not.toHaveBeenCalled();
   });
 
-  it('removes a confirmed deletion from the rendered list', () => {
+  it('removes an inline-confirmed deletion from the rendered list', () => {
     bookService.getAll.and.returnValue(of([book]));
     bookService.delete.and.returnValue(of(undefined));
-    spyOn(globalThis, 'confirm').and.returnValue(true);
     const fixture = TestBed.createComponent(BookListPage);
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('button.btn-outline-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.delete-confirmation .btn-danger') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(bookService.delete).toHaveBeenCalledOnceWith(1);
@@ -88,14 +91,35 @@ describe('BookListPage', () => {
   it('preserves a book when confirmed deletion fails', () => {
     bookService.getAll.and.returnValue(of([book]));
     bookService.delete.and.returnValue(throwError(() => new Error('failed')));
-    spyOn(globalThis, 'confirm').and.returnValue(true);
     const fixture = TestBed.createComponent(BookListPage);
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('button.btn-outline-danger') as HTMLButtonElement).click();
     fixture.detectChanges();
+    (fixture.nativeElement.querySelector('.delete-confirmation .btn-danger') as HTMLButtonElement).click();
+    fixture.detectChanges();
 
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('Kindred');
     expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeTruthy();
+  });
+
+  it('filters books by title or author and clears the search', () => {
+    bookService.getAll.and.returnValue(
+      of([book, { ...book, id: 2, title: 'Dune', author: 'Frank Herbert' }]),
+    );
+    const fixture = TestBed.createComponent(BookListPage);
+    fixture.detectChanges();
+    const search = fixture.nativeElement.querySelector('#book-search') as HTMLInputElement;
+
+    search.value = 'Octavia';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(1);
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Dune');
+
+    (fixture.nativeElement.querySelector('.input-group .btn-outline-secondary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('tbody tr').length).toBe(2);
   });
 });

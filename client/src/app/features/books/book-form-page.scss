@@ -1,0 +1,35 @@
+.book-form-shell {
+  max-width: 50rem;
+}
+
+.back-link {
+  color: var(--bs-secondary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--bs-primary);
+}
+
+.form-banner {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  background: linear-gradient(125deg, var(--app-soft-primary), color-mix(in srgb, var(--bs-body-bg) 90%, var(--bs-primary) 10%));
+}
+
+.form-icon {
+  display: inline-grid;
+  width: 3rem;
+  height: 3rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.85rem;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 575.98px) {
+  .form-icon {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+}

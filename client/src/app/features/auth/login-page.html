@@ -1,8 +1,22 @@
-<section class="mx-auto" style="max-width: 32rem" aria-labelledby="login-title">
-  <div class="card shadow-sm">
-    <div class="card-body p-4 p-md-5">
-      <h1 id="login-title" class="h2 mb-2">Login</h1>
-      <p class="text-body-secondary">Sign in to manage your books and favorite quotes.</p>
+<section class="auth-shell mx-auto" aria-labelledby="login-title">
+  <div class="card shadow-sm overflow-hidden">
+    <div class="row g-0">
+    <div class="col-lg-5 auth-intro d-none d-lg-flex flex-column justify-content-between p-5">
+      <div>
+        <span class="auth-icon" aria-hidden="true"><i class="fa-solid fa-book-open"></i></span>
+        <h2 class="h3 mt-4">Your next chapter starts here.</h2>
+        <p class="mb-0">One calm place for the books you read and the words you want to remember.</p>
+      </div>
+      <ul class="list-unstyled small mb-0">
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Manage your reading list</li>
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Save personal quotes</li>
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Access it on any screen</li>
+      </ul>
+    </div>
+    <div class="col-lg-7 card-body p-4 p-md-5">
+      <p class="page-eyebrow">Welcome back</p>
+      <h1 id="login-title" class="h2 page-title">Sign in to your space</h1>
+      <p class="text-body-secondary mb-4">Continue managing your books and favorite quotes.</p>
 
       @if (registrationSucceeded) {
         <div class="alert alert-success" role="status">Account created. You can now log in.</div>
@@ -31,19 +45,30 @@
 
         <div class="mb-4">
           <label class="form-label" for="login-password">Password</label>
-          <input
-            id="login-password"
-            class="form-control"
-            [class.is-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
-            type="password"
-            formControlName="password"
-            autocomplete="current-password"
-            [attr.aria-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
-            aria-describedby="login-password-error"
-          />
+          <div class="input-group" [class.has-validation]="loginForm.controls.password.touched && loginForm.controls.password.invalid">
+            <input
+              id="login-password"
+              class="form-control"
+              [class.is-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              [attr.aria-invalid]="loginForm.controls.password.touched && loginForm.controls.password.invalid"
+              aria-describedby="login-password-error"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+              [attr.title]="showPassword() ? 'Hide password' : 'Show password'"
+              (click)="togglePassword()"
+            >
+              <i class="fa-solid" [class.fa-eye]="!showPassword()" [class.fa-eye-slash]="showPassword()" aria-hidden="true"></i>
+            </button>
           @if (loginForm.controls.password.touched && loginForm.controls.password.hasError('required')) {
             <div id="login-password-error" class="invalid-feedback">Password is required.</div>
           }
+          </div>
         </div>
 
         <button class="btn btn-primary w-100" type="submit" [disabled]="isSubmitting()">
@@ -57,7 +82,8 @@
         </button>
       </form>
 
-      <p class="text-center mt-4 mb-0">New here? <a routerLink="/register">Create an account</a>.</p>
+      <p class="text-center mt-4 mb-0">New here? <a class="fw-semibold" routerLink="/register">Create an account</a>.</p>
+    </div>
     </div>
   </div>
 </section>

@@ -1,8 +1,22 @@
-<section class="mx-auto" style="max-width: 32rem" aria-labelledby="register-title">
-  <div class="card shadow-sm">
-    <div class="card-body p-4 p-md-5">
-      <h1 id="register-title" class="h2 mb-2">Create Account</h1>
-      <p class="text-body-secondary">Register to start managing your personal collection.</p>
+<section class="auth-shell mx-auto" aria-labelledby="register-title">
+  <div class="card shadow-sm overflow-hidden">
+    <div class="row g-0">
+    <div class="col-lg-5 auth-intro d-none d-lg-flex flex-column justify-content-between p-5">
+      <div>
+        <span class="auth-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
+        <h2 class="h3 mt-4">Build a collection that feels like yours.</h2>
+        <p class="mb-0">Your account starts with five hand-picked quotes, ready to edit or replace.</p>
+      </div>
+      <ul class="list-unstyled small mb-0">
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Free to get started</li>
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Five starter quotes</li>
+        <li><i class="fa-solid fa-check me-2" aria-hidden="true"></i>Light and dark themes</li>
+      </ul>
+    </div>
+    <div class="col-lg-7 card-body p-4 p-md-5">
+      <p class="page-eyebrow">Join Book & Quotes</p>
+      <h1 id="register-title" class="h2 page-title">Create your account</h1>
+      <p class="text-body-secondary mb-4">Start organizing your personal collection in a minute.</p>
 
       @if (errorMessage(); as message) {
         <div class="alert alert-danger" role="alert">{{ message }}</div>
@@ -30,19 +44,33 @@
 
         <div class="mb-3">
           <label class="form-label" for="register-password">Password</label>
-          <input
-            id="register-password"
-            class="form-control"
-            [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
-            type="password"
-            formControlName="password"
-            autocomplete="new-password"
-            [attr.aria-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
-            aria-describedby="register-password-help register-password-error"
-          />
-          <div id="register-password-help" class="form-text">
-            Use 8–100 characters with uppercase, lowercase, and a number.
+          <div class="input-group" [class.has-validation]="registerForm.controls.password.touched && registerForm.controls.password.invalid">
+            <input
+              id="register-password"
+              class="form-control"
+              [class.is-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+              [type]="showPasswords() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              [attr.aria-invalid]="registerForm.controls.password.touched && registerForm.controls.password.invalid"
+              aria-describedby="register-password-help register-password-error"
+            />
+            <button
+              class="btn btn-outline-secondary"
+              type="button"
+              [attr.aria-label]="showPasswords() ? 'Hide passwords' : 'Show passwords'"
+              [attr.title]="showPasswords() ? 'Hide passwords' : 'Show passwords'"
+              (click)="togglePasswords()"
+            >
+              <i class="fa-solid" [class.fa-eye]="!showPasswords()" [class.fa-eye-slash]="showPasswords()" aria-hidden="true"></i>
+            </button>
           </div>
+          <ul id="register-password-help" class="password-requirements list-unstyled form-text d-grid gap-1 mt-2 mb-0">
+            <li [class.requirement-met]="passwordRequirements().length"><i class="fa-solid" [class.fa-circle-check]="passwordRequirements().length" [class.fa-circle]="!passwordRequirements().length" aria-hidden="true"></i> At least 8 characters</li>
+            <li [class.requirement-met]="passwordRequirements().uppercase"><i class="fa-solid" [class.fa-circle-check]="passwordRequirements().uppercase" [class.fa-circle]="!passwordRequirements().uppercase" aria-hidden="true"></i> One uppercase letter</li>
+            <li [class.requirement-met]="passwordRequirements().lowercase"><i class="fa-solid" [class.fa-circle-check]="passwordRequirements().lowercase" [class.fa-circle]="!passwordRequirements().lowercase" aria-hidden="true"></i> One lowercase letter</li>
+            <li [class.requirement-met]="passwordRequirements().number"><i class="fa-solid" [class.fa-circle-check]="passwordRequirements().number" [class.fa-circle]="!passwordRequirements().number" aria-hidden="true"></i> One number</li>
+          </ul>
           @if (registerForm.controls.password.touched && registerForm.controls.password.invalid) {
             <div id="register-password-error" class="invalid-feedback">Enter a password that meets all requirements.</div>
           }
@@ -57,7 +85,7 @@
               registerForm.controls.confirmPassword.touched &&
               (registerForm.controls.confirmPassword.invalid || registerForm.hasError('passwordMismatch'))
             "
-            type="password"
+            [type]="showPasswords() ? 'text' : 'password'"
             formControlName="confirmPassword"
             autocomplete="new-password"
             [attr.aria-invalid]="
@@ -85,7 +113,8 @@
         </button>
       </form>
 
-      <p class="text-center mt-4 mb-0">Already registered? <a routerLink="/login">Go to login</a>.</p>
+      <p class="text-center mt-4 mb-0">Already registered? <a class="fw-semibold" routerLink="/login">Go to login</a>.</p>
+    </div>
     </div>
   </div>
 </section>

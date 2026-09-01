@@ -20,6 +20,7 @@ export class App {
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   protected readonly isAuthenticated = this.authService.isAuthenticated;
+  protected readonly currentUser = this.authService.currentUser;
   protected readonly theme = this.themeService.theme;
 
   constructor() {

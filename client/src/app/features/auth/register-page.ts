@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
   FormBuilder,
@@ -20,6 +21,7 @@ function passwordsMatch(control: AbstractControl): ValidationErrors | null {
   selector: 'app-register-page',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './register-page.html',
+  styleUrl: './auth-page.scss',
 })
 export class RegisterPage {
   private readonly formBuilder = inject(FormBuilder);
@@ -27,6 +29,7 @@ export class RegisterPage {
   private readonly router = inject(Router);
 
   protected readonly isSubmitting = signal(false);
+  protected readonly showPasswords = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly registerForm = this.formBuilder.nonNullable.group(
     {
@@ -44,6 +47,22 @@ export class RegisterPage {
     },
     { validators: passwordsMatch },
   );
+  private readonly passwordValue = toSignal(this.registerForm.controls.password.valueChanges, {
+    initialValue: this.registerForm.controls.password.value,
+  });
+  protected readonly passwordRequirements = computed(() => {
+    const value = this.passwordValue();
+    return {
+      length: value.length >= 8,
+      uppercase: /[A-Z]/.test(value),
+      lowercase: /[a-z]/.test(value),
+      number: /\d/.test(value),
+    };
+  });
+
+  protected togglePasswords(): void {
+    this.showPasswords.update((isVisible) => !isVisible);
+  }
 
   protected submit(): void {
     if (this.registerForm.invalid || this.isSubmitting()) {
