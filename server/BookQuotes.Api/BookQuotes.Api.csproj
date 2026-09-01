@@ -4,6 +4,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>BookQuotes.Api-7f439ac8-9809-43bf-8b62-c67f924dcd7a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
