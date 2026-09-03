@@ -22,7 +22,7 @@ Azure App Service on Linux does not support file-based databases such as SQLite 
 filesystem cannot provide the required exclusive file locks. The API therefore supports the
 `SqlServer` provider in production, while the same migrations still create the local SQLite schema.
 
-## 1. Prerequisites and cost control
+## 1. Prerequisites and zero-cost guardrails
 
 You need:
 
@@ -31,10 +31,17 @@ You need:
 - Access to this GitHub repository's Actions settings.
 - A local clone only if you want to verify the deployment package yourself.
 
-App Service and Azure SQL can incur charges. Review the selected tiers in the Azure pricing
-calculator and create a budget or cost alert before continuing. The examples use the `B1` App
-Service tier and `Basic` Azure SQL tier for a small demonstration environment; choose tiers that fit
-your subscription and expected use.
+This guide deliberately selects services that currently have a no-cost option:
+
+- Windows App Service `F1` is $0, with 60 CPU minutes per day, 1 GB RAM, 1 GB storage, no SLA, and
+  no Always On feature. It is intended for learning and demonstrations rather than production.
+- The Azure SQL free offer includes 100,000 vCore-seconds, 32 GB data storage, and 32 GB backup
+  storage per database each month. `AutoPause` is selected below so Azure pauses the database for
+  the rest of the month instead of charging for overage.
+
+Azure pricing and subscription eligibility can change. Confirm that the portal's estimated monthly
+cost is **$0** before creating either resource, and create a budget alert as a second safeguard. Do
+not substitute another App Service SKU or change SQL exhaustion behavior to `BillOverUsage`.
 
 ## 2. Sign in and choose unique names
 
@@ -72,7 +79,7 @@ az appservice plan create \
   --name "$BOOK_QUOTES_PLAN" \
   --resource-group "$BOOK_QUOTES_RESOURCE_GROUP" \
   --location "$BOOK_QUOTES_LOCATION" \
-  --sku B1
+  --sku F1
 
 az webapp list-runtimes --os-type Windows --output table
 
@@ -86,7 +93,8 @@ az webapp create \
 The runtime listing is an intentional check: if Azure changes the canonical .NET 9 runtime label,
 use the value shown by `az webapp list-runtimes`.
 
-Require HTTPS and enable Always On for the `B1` plan:
+Require HTTPS. Keep Always On disabled because it is unavailable on `F1` and enabling it can require
+a paid tier:
 
 ```bash
 az webapp update \
@@ -97,10 +105,23 @@ az webapp update \
 az webapp config set \
   --name "$BOOK_QUOTES_APP" \
   --resource-group "$BOOK_QUOTES_RESOURCE_GROUP" \
-  --always-on true \
+  --always-on false \
   --http20-enabled true \
   --ftps-state Disabled
 ```
+
+Verify that Azure created the free plan before continuing. The result must show `Free` and `F1`:
+
+```bash
+az appservice plan show \
+  --name "$BOOK_QUOTES_PLAN" \
+  --resource-group "$BOOK_QUOTES_RESOURCE_GROUP" \
+  --query "{tier:sku.tier,name:sku.name}" \
+  --output table
+```
+
+If your subscription has no F1 quota in the selected region, try another region. Do not select a
+paid SKU merely to bypass the quota error.
 
 ## 4. Create Azure SQL
 
@@ -124,8 +145,29 @@ az sql db create \
   --resource-group "$BOOK_QUOTES_RESOURCE_GROUP" \
   --server "$BOOK_QUOTES_SQL_SERVER" \
   --name "$BOOK_QUOTES_DATABASE" \
-  --service-objective Basic
+  --edition GeneralPurpose \
+  --family Gen5 \
+  --capacity 2 \
+  --compute-model Serverless \
+  --use-free-limit \
+  --free-limit-exhaustion-behavior AutoPause \
+  --backup-storage-redundancy Local
 ```
+
+Verify the effective settings. `useFreeLimit` must be `true` and `exhaustionBehavior` must be
+`AutoPause`:
+
+```bash
+az sql db show \
+  --resource-group "$BOOK_QUOTES_RESOURCE_GROUP" \
+  --server "$BOOK_QUOTES_SQL_SERVER" \
+  --name "$BOOK_QUOTES_DATABASE" \
+  --query "{useFreeLimit:useFreeLimit,exhaustionBehavior:freeLimitExhaustionBehavior,sku:sku.name}" \
+  --output json
+```
+
+If the free offer is unavailable for the subscription, stop here rather than creating a paid SQL
+database. Microsoft Azure for Students Starter is currently not eligible for this particular offer.
 
 Allow resources inside Azure to reach the database. This rule is convenient for a learning
 deployment, but a production system should use private networking and managed identity instead:
@@ -224,7 +266,8 @@ Then open `$BOOK_QUOTES_URL` and verify:
 - `/api/books` without a Bearer token returns `401 Unauthorized`.
 
 The API runs EF Core migrations and seeds the three initial books during startup. The first request
-can therefore take longer than later requests.
+can therefore take longer than later requests. F1 App Service and serverless SQL both sleep while
+idle, so cold starts are expected on a free deployment.
 
 When the data model changes, review every new migration for both providers before deploying. The
 committed migrations intentionally select SQLite or SQL Server column types at runtime. Generate
@@ -268,6 +311,8 @@ Common problems:
 | GitHub deployment fails immediately | Add the exact repository variable and full publish-profile secret described above. |
 | Refreshing `/books` returns 404 | Confirm Angular files were copied into `publish/wwwroot` by the workflow. |
 | Login works locally but not in Azure | Confirm the site uses HTTPS and `/api`, then inspect the browser network response and App Service logs. |
+| First request is slow | F1 App Service and free serverless SQL may both be waking from an idle state; retry after startup completes. |
+| Site stops responding during heavy testing | Check the App Service daily CPU quota and SQL free amount. The no-cost configuration stops or pauses instead of billing overage. |
 
 ## 9. Remove the demonstration environment
 
@@ -284,6 +329,8 @@ profile is regenerated.
 ## Official Azure references
 
 - [Deploy App Service with GitHub Actions](https://learn.microsoft.com/azure/app-service/deploy-github-actions)
+- [App Service pricing and F1 limits](https://azure.microsoft.com/pricing/details/app-service/windows/)
+- [Azure SQL Database free offer](https://learn.microsoft.com/azure/azure-sql/database/free-offer)
 - [Configure App Service settings and connection strings](https://learn.microsoft.com/azure/app-service/configure-common)
 - [App Service Linux SQLite limitation](https://learn.microsoft.com/troubleshoot/azure/app-service/faqs-app-service-linux-new)
 - [Deploy ASP.NET Core with Azure SQL](https://learn.microsoft.com/azure/app-service/tutorial-dotnetcore-sqldb-app)

@@ -159,7 +159,8 @@ the same origin at `/api`. The values are defined in `client/src/environments/`.
 
 The production build can run as one Azure App Service: ASP.NET Core serves the compiled Angular
 application and API from the same HTTPS origin, while Azure SQL stores persistent data. The
-repository includes a manually triggered GitHub Actions deployment workflow.
+repository includes a manually triggered GitHub Actions deployment workflow. The guide selects the
+free App Service F1 plan and Azure SQL free offer with automatic pause rather than paid overage.
 
 Follow the complete [Azure deployment guide](docs/azure-deployment.md) to create the resources,
 configure secrets, deploy, verify, troubleshoot, and remove the resources when finished.
